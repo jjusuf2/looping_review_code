@@ -20,9 +20,9 @@ loop_num_arr = np.array([3, 4, 5])
 EP_loops_lifetime_histograms = pd.DataFrame(index=loop_num_arr, columns=['bin_edges', 'hist', 'hist_non_sticky', 'hist_diff', 'mean'])
 
 for loop_num in loop_num_arr:
-    lifetimes = t_under_50nm_EP.loc[(t_under_50nm_EP['loop']==loop_num) & (t_under_50nm_EP['noise']==0) & (t_under_50nm_EP['dt']==0.05), 'time']
-    lifetimes_ns = t_under_50nm_EP_ns.loc[(t_under_50nm_EP_ns['loop']==loop_num) & (t_under_50nm_EP_ns['noise']==0) & (t_under_50nm_EP_ns['dt']==0.05), 'time']
-    bin_size = 0.1
+    lifetimes = t_under_50nm_EP.loc[(t_under_50nm_EP['loop']==loop_num) & (t_under_50nm_EP['noise']==0) & (t_under_50nm_EP['dt']==0.1), 'time']
+    lifetimes_ns = t_under_50nm_EP_ns.loc[(t_under_50nm_EP_ns['loop']==loop_num) & (t_under_50nm_EP_ns['noise']==0) & (t_under_50nm_EP_ns['dt']==0.1), 'time']
+    bin_size = 0.2
     hist, bin_edges = np.histogram(lifetimes, bins=np.arange(0, 10, bin_size))
     hist_ns, _ = np.histogram(lifetimes_ns, bins=np.arange(0, 10, bin_size))
     hist_diff = hist-hist_ns
