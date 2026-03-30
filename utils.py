@@ -156,6 +156,7 @@ def event_lifetimes(
 def ctcf_event_lifetimes_all_reps(
     loop_num: int,
     ignore_changes_time: float = 0,
+    target_frame_duration : float = 1,
     pbar: tqdm | None = None,
     reps: np.ndarray | None = None
 ) -> np.ndarray:
@@ -164,6 +165,9 @@ def ctcf_event_lifetimes_all_reps(
     Note that all timepoints are always used; time sampling is not performed here.
     If `pbar` is provided, update it once per replicate.
     """
+    sample_every = int(np.round(target_frame_duration / DELTA_T))
+    actual_frame_duration = sample_every * DELTA_T
+
     lifetimes_all: list[pd.Series] = []
 
     if reps is None:
@@ -174,7 +178,7 @@ def ctcf_event_lifetimes_all_reps(
         lifetimes_this_rep = event_lifetimes(
             ctcf_state,
             ignore_changes_time = ignore_changes_time,
-            dt = 1
+            dt = actual_frame_duration
         )
         lifetimes_all.append(lifetimes_this_rep)
 

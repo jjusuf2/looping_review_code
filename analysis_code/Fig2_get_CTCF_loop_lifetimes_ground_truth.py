@@ -23,6 +23,7 @@ with tqdm(total=total_iters, desc="calculating CTCF lifetimes", unit="rep") as p
         lifetimes = ctcf_event_lifetimes_all_reps(
             loop_num=loop_num,
             ignore_changes_time=30,
+            target_frame_duration=0.02,
             pbar=pbar
         )
         for life in lifetimes:
