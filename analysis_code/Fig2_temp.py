@@ -11,8 +11,8 @@ from utils import *  # key functions for this project
 
 THRESHOLD = 50
 
-dt_arr = np.array([0.05])
-loop_num_arr = np.array([0, 1, 2])
+dt_arr = np.array([0.04])
+loop_num_arr = np.array([3, 4, 5])
 noise_arr = np.array([0, 10, 20, 30, 40, 50])
 
 n_reps = 19 - 10 + 1  # 10..19 inclusive
@@ -42,6 +42,6 @@ with tqdm(total=total_iters, desc="calculating times below threshold", unit="rep
                         }
                     )
 
-under_threshold_times_df_CTCF = pd.DataFrame(rows)
+under_threshold_times_df_EP = pd.DataFrame(rows)
 
-under_threshold_times_df_CTCF.to_csv(f'../data/CTCF_loops_under_threshold_times_{THRESHOLD}nm_dt_0.05.csv', index=False, float_format="%.2f")
+under_threshold_times_df_EP.to_csv(f'../data/EP_loops_under_threshold_times_{THRESHOLD}nm_004.csv', index=False, float_format="%.2f")

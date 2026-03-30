@@ -11,7 +11,7 @@ from utils import *  # key functions for this project
 
 THRESHOLD = 50
 
-dt_arr = np.array([0.02, 0.04, 0.1, 0.2, 0.5, 1, 2, 5, 10, 30, 60, 120])
+dt_arr = np.array([0.04])
 loop_num_arr = np.array([3, 4, 5])
 noise_arr = np.array([0, 10, 20, 30, 40, 50])
 reps_arr = np.array([10, 11, 12, 13, 14, 15, 16, 17, 18, 19])

@@ -11,7 +11,7 @@ from utils import *  # key functions for this project
 
 THRESHOLD = 50
 
-dt_arr = np.array([0.02, 0.04, 0.1, 0.2, 0.5, 1, 2, 5, 10, 30, 60, 120])
+dt_arr = np.array([0.04])
 loop_num_arr = np.array([3, 4, 5])
 noise_arr = np.array([0, 10, 20, 30, 40, 50])
 
@@ -30,7 +30,8 @@ with tqdm(total=total_iters, desc="calculating times below threshold", unit="rep
                     threshold=THRESHOLD,
                     ignore_changes_time=dt,
                     target_frame_duration=dt,
-                    pbar=pbar
+                    pbar=pbar,
+                    non_sticky=True
                 )
                 for under_threshold_time in under_threshold_times:
                     rows.append(
@@ -44,4 +45,4 @@ with tqdm(total=total_iters, desc="calculating times below threshold", unit="rep
 
 under_threshold_times_df_EP = pd.DataFrame(rows)
 
-under_threshold_times_df_EP.to_csv(f'../data/EP_loops_under_threshold_times_{THRESHOLD}nm.csv', index=False, float_format="%.2f")
+under_threshold_times_df_EP.to_csv(f'../data/EP_loops_non_sticky_under_threshold_times_{THRESHOLD}nm_004.csv', index=False, float_format="%.2f")
