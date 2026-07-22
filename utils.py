@@ -49,6 +49,44 @@ def load_trajectory(loop_num: int, rep: int, noise: int, non_sticky: bool=False)
 
     return pd.Series(values, index=time_index, name=name)
 
+def dist_3D_stats_all_reps(
+    loop_num: int,
+    noise: int,
+    non_sticky: bool = False,
+    pbar: tqdm | None = None,
+    reps: np.ndarray | None = None
+) -> tuple[float, float]:
+    """
+    Get the mean 3D distance, median, mean error on 3D distance, and median error of a given loop
+    when a certain amount of noise is added, using data from all reps.
+    """
+
+    if reps is None:
+        reps = range(10, 19 + 1)  # 10..19 inclusive
+
+    all_dist_3D = []
+    diffs = []
+
+    for rep in reps:
+        traj_no_noise = load_trajectory(loop_num, rep, 0, non_sticky)
+        traj_noise = load_trajectory(loop_num, rep, noise, non_sticky)
+        diff = traj_noise - traj_no_noise  # the difference between measured vs true 3D distance
+        all_dist_3D.append(traj_noise)
+        diffs.append(diff)
+
+        if pbar is not None:
+            pbar.update(1)
+    
+    all_dist_3D = np.concatenate(all_dist_3D)
+    diffs = np.concatenate(diffs)
+
+    mean = np.mean(all_dist_3D)
+    median = np.median(all_dist_3D)
+    mean_err = np.mean(np.abs(diff))
+    median_err = np.median(np.abs(diff))
+
+    return mean, median, mean_err, median_err
+
 def load_ctcf_state(loop_num: int, rep: int) -> pd.Series:
     """
     Load the binary CTCF state (0/1) over time for loops 0, 1, 2,
