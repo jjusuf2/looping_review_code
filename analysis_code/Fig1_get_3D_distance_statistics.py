@@ -5,7 +5,7 @@ from pathlib import Path
 sys.path.append('../')
 from utils import *  # key functions for this project
 
-noise_arr = [10, 20, 30, 40, 50]
+noise_arr = [0, 10, 20, 30, 40, 50]
 
 print(f'sigma_x   mean   median   mean_err   median_err')
 for noise in noise_arr:
