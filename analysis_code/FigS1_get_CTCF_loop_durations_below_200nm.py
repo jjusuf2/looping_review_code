@@ -1,3 +1,5 @@
+# This file is the same as Fig2_get_CTCF_loop_durations_below_50nm.py, but THRESHOLD = 200
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
