@@ -36,7 +36,7 @@ with tqdm(total=total_iters, desc="gathering 3D distances", unit="rep") as pbar:
             
 dist_3D_distribution_histograms = pd.DataFrame(rows)
 
-dist_3D_distribution_histograms.to_pickle('../data/3D_dist_histograms.pkl')
+dist_3D_distribution_histograms.to_pickle('/mnt/md1/jjusuf/looping_review/analysis_data/3D_dist_histograms.pkl')
 
 print('Getting distributions for looped/unlooped separately')
 loop_nums_CTCF = np.array([0, 1, 2])
@@ -76,4 +76,4 @@ with tqdm(total=total_iters, desc="gathering 3D distances", unit="rep") as pbar:
             
 dist_3D_distribution_histograms_with_looping = pd.DataFrame(rows)
 
-dist_3D_distribution_histograms_with_looping.to_pickle('../data/3D_dist_histograms_with_looping.pkl')
+dist_3D_distribution_histograms_with_looping.to_pickle('/mnt/md1/jjusuf/looping_review/analysis_data/3D_dist_histograms_with_looping.pkl')

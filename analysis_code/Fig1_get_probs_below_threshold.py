@@ -24,6 +24,6 @@ with tqdm(total=total_iters, desc="probability under threshold", unit="rep") as 
         for noise in noise_levels:
             probs_under_threshold.loc[loop_num, noise] = prob_under_threshold_all_reps(loop_num, noise, non_sticky=False, threshold=THRESHOLD, pbar=pbar)
         
-with open('../data/probs_under_threshold.csv', mode='w') as f:
+with open('/mnt/md1/jjusuf/looping_review/analysis_data/probs_under_threshold.csv', mode='w') as f:
     f.write('# Note: columns correspond to different noise levels (provided as sigma_x in nm)\n')
     probs_under_threshold.to_csv(f, float_format="%.6f")

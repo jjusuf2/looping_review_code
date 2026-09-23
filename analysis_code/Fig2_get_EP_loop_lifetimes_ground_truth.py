@@ -33,4 +33,4 @@ for loop_num in loop_num_arr:
     # save results
     EP_loops_lifetime_histograms.loc[loop_num] = bin_edges, hist, hist_ns, hist_diff, mean
 
-EP_loops_lifetime_histograms.to_pickle('../data/EP_loops_lifetime_histograms.pkl')
+EP_loops_lifetime_histograms.to_pickle('/mnt/md1/jjusuf/looping_review/analysis_data/EP_loops_lifetime_histograms.pkl')

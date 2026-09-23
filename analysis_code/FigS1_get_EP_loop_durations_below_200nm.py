@@ -46,4 +46,4 @@ with tqdm(total=total_iters, desc="calculating times below threshold", unit="rep
 
 under_threshold_times_df_EP = pd.DataFrame(rows)
 
-under_threshold_times_df_EP.to_csv(f'../data/EP_loops_under_threshold_times_{THRESHOLD}nm.csv', index=False, float_format="%.2f")
+under_threshold_times_df_EP.to_csv(f'/mnt/md1/jjusuf/looping_review/analysis_data/EP_loops_under_threshold_times_{THRESHOLD}nm.csv', index=False, float_format="%.2f")

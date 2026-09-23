@@ -41,4 +41,4 @@ for dt in dt_arr:
                     )
 
     search_times_EP = pd.DataFrame(rows_EP)
-    search_times_EP.to_csv(f'../data/search_times_EP_deltaT_{dt}s_200nm.csv', index=False, float_format="%.2f")
+    search_times_EP.to_csv(f'/mnt/md1/jjusuf/looping_review/analysis_data/search_times_EP_deltaT_{dt}s_200nm.csv', index=False, float_format="%.2f")

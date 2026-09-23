@@ -56,4 +56,4 @@ with tqdm(total=total_iters, desc="looping probabilities (random)", unit="rep") 
         
         looping_probs.loc[loop_num] = looping_prob_this_loop
         
-looping_probs.to_csv('../data/looping_probs.csv', float_format="%.6f")
+looping_probs.to_csv('/mnt/md1/jjusuf/looping_review/analysis_data/looping_probs.csv', float_format="%.6f")

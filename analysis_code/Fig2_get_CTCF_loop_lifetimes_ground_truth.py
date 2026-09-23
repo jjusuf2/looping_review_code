@@ -36,4 +36,4 @@ with tqdm(total=total_iters, desc="calculating CTCF lifetimes", unit="rep") as p
 
 lifetimes_df = pd.DataFrame(rows)
 
-lifetimes_df.to_csv(f'../data/CTCF_loops_lifetimes.csv', index=False, float_format="%.2f")
+lifetimes_df.to_csv(f'/mnt/md1/jjusuf/looping_review/analysis_data/CTCF_loops_lifetimes.csv', index=False, float_format="%.2f")

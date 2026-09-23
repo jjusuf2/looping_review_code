@@ -31,4 +31,4 @@ with tqdm(total=total_iters, desc="calculating search times", unit="rep") as pba
             )
 
 search_times_CTCF = pd.DataFrame(rows_CTCF)
-search_times_CTCF.to_csv(f'../data/search_times_CTCF_actual.csv', index=False, float_format="%.2f")
+search_times_CTCF.to_csv(f'/mnt/md1/jjusuf/looping_review/analysis_data/search_times_CTCF_actual.csv', index=False, float_format="%.2f")
