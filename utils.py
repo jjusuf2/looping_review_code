@@ -3,7 +3,7 @@ import pandas as pd
 import os
 from tqdm.auto import tqdm
 
-DATA_FOLDER = "/mnt/md0/jjusuf/looping_review/processed_data"
+DATA_FOLDER = "/mnt/md1/jjusuf/looping_review/processed_data"
 
 DELTA_T = 0.02
 
