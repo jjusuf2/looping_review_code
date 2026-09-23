@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import os
+from functools import lru_cache
 from tqdm.auto import tqdm
 
 DATA_FOLDER = "/mnt/md1/jjusuf/looping_review/processed_data"
@@ -27,19 +28,32 @@ def _load_mat_array(loop_num: int, rep: int, noise: int, non_sticky: bool=False)
 
     return mat
 
+@lru_cache(maxsize=16)
+def _load_trajectory_arrays(loop_num: int, rep: int, noise: int, non_sticky: bool=False) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Load the time points and 3D distances of a trajectory. Cached, because parsing
+    the text file takes ~1 s; 16 trajectories take ~800 MB. The cached arrays are
+    shared between calls, so callers must copy them before handing them out.
+    """
+    arr = _load_mat_array(loop_num, rep, noise, non_sticky=non_sticky)
+
+    # time points always in first column
+    time_index = arr[:, 0].copy()  # copy so the cache doesn't keep the whole matrix alive
+
+    # 3D distance always in last column
+    values = arr[:, -1].copy()
+
+    return time_index, values
+
 def load_trajectory(loop_num: int, rep: int, noise: int, non_sticky: bool=False) -> pd.Series:
     """
     Load the trajectory of 3D distance over time for a given loop, replicate,
     and amount of noise, as a time-indexed pandas Series. Use the non-sticky
     argument to load the non-sticky trajectories of EP loops.
+    The 16 most recently loaded trajectories are cached; each call returns a new copy.
     """
-    arr = _load_mat_array(loop_num, rep, noise, non_sticky=non_sticky)
-
-    # time points always in first column
-    time_index = arr[:, 0]
-
-    # 3D distance always in last column
-    values = arr[:, -1]
+    time_index, values = _load_trajectory_arrays(int(loop_num), int(rep), int(noise), bool(non_sticky))
+    time_index, values = time_index.copy(), values.copy()  # callers may modify the Series in place
 
     if non_sticky:
         non_sticky_str = '_non_sticky'
@@ -125,6 +139,8 @@ def event_lifetimes(
         Threshold in seconds:
         - 0-gaps with length <= ignore_changes_time are bridged (set to 1).
         - Events with length < ignore_changes_time are discarded.
+        Events touching either end of the series (after bridging) are
+        incomplete and are always discarded.
     dt : float
         Time between frames in seconds
 
@@ -140,42 +156,30 @@ def event_lifetimes(
     # Binary track in frames
     binary_track = state.astype(int).to_numpy()
 
-    # ---- First pass: find starts/ends and drop incomplete edge events ----
+    # ---- First pass: find starts/ends ----
+    # starts[i] is the first frame of event i, ends[i] is the frame after its last frame
     diffs = np.diff(np.pad(binary_track * 1, pad_width=(1, 1)))  # pad with zeros
     starts = np.where(diffs == 1)[0]   # transitions 0 -> 1
     ends = np.where(diffs == -1)[0]    # transitions 1 -> 0
 
-    # If there are no events at all, return empty
-    if len(starts) == 0 or len(ends) == 0:
-        return pd.Series(dtype=float, name="lifetime")
-
-    # Remove first event if incomplete
-    if starts[0] == 0:
-        starts = starts[1:]
-        ends = ends[1:]
-        if len(starts) == 0 or len(ends) == 0:
-            return pd.Series(dtype=float, name="lifetime")
-
-    # Remove last event if incomplete
-    if ends[-1] == len(binary_track) - 1:
-        starts = starts[:-1]
-        ends = ends[:-1]
-        if len(starts) == 0 or len(ends) == 0:
-            return pd.Series(dtype=float, name="lifetime")
-
     # ---- Bridge short gaps between events ----
-    gaps = ends[1:] - starts[:-1]  # gap between end(i) and start(i+1)
+    gaps = starts[1:] - ends[:-1]  # gap between end(i) and start(i+1)
     for i, gap in enumerate(gaps):
         if gap * dt <= ignore_changes_time:
-            # Bridge from start of event i to end of event i+1
-            binary_track[starts[i]:ends[i + 1]] = 1
+            # Fill the gap between event i and event i+1
+            binary_track[ends[i]:starts[i + 1]] = 1
 
     # ---- Recompute starts/ends after bridging ----
     diffs = np.diff(np.pad(binary_track * 1, pad_width=(1, 1)))
     starts = np.where(diffs == 1)[0]
     ends = np.where(diffs == -1)[0]
 
-    if len(starts) == 0 or len(ends) == 0:
+    # ---- Drop incomplete events (those touching the first or last frame) ----
+    complete = (starts > 0) & (ends < len(binary_track))
+    starts = starts[complete]
+    ends = ends[complete]
+
+    if len(starts) == 0:
         return pd.Series(dtype=float, name="lifetime")
 
     # Event lengths
@@ -263,6 +267,124 @@ def under_threshold_times_all_reps(
             traj<threshold,
             ignore_changes_time = ignore_changes_time,
             dt = actual_frame_duration
+        )
+        lifetimes_all.append(lifetimes_this_rep)
+
+        if pbar is not None:
+            pbar.update(1)
+
+    if not lifetimes_all:
+        return np.array([], dtype=float)
+
+    lifetimes = pd.concat(lifetimes_all)
+    return lifetimes.to_numpy()
+
+def apply_temporal_threshold(binary_arr: np.ndarray, temporal_threshold: int) -> np.ndarray:
+    '''Given a binary array, filters out events that are shorter than a specified number of frames.'''
+    filtered_arr = binary_arr.copy()
+    padded_arr = np.r_[0, binary_arr, 0]
+    interval_starts = np.where(np.diff(padded_arr) == 1)[0]
+    interval_ends = np.where(np.diff(padded_arr) == -1)[0]
+
+    for start, end in zip(interval_starts, interval_ends):
+        if end - start < temporal_threshold:
+            filtered_arr[start:end] = 0
+
+    return filtered_arr
+
+def apply_moving_average(binary_arr: np.ndarray, window_size: int) -> np.ndarray:
+    '''
+    Given a binary array, apply smoothing by using a centered moving average with the provided window size in frames.
+    Frames beyond either end of the array count as 0. Uses a cumulative sum, so it takes O(n) time for any window size.
+
+    An odd window (2m+1 frames) is centered on each frame i: frames i-m..i+m, each with weight 1.
+    An even window (2m frames) cannot be centered on a frame, and shifting it half a frame either way moves every
+    smoothed edge by one frame. Instead it is averaged over both shifts: frames i-m..i+m, with the two end frames
+    weighted 1/2 (total weight 2m; the standard "2 x 2m" centered moving average).
+
+    After apply_temporal_threshold with the same window size, thresholding the result at > 0.5 leaves the edges of
+    every event unchanged and fills the gaps between events that are shorter than window_size / 2 frames.
+    '''
+    if window_size < 1:
+        raise ValueError(f'window_size must be at least 1 frame, got {window_size}')
+
+    n = len(binary_arr)
+    half = window_size // 2
+    # zero-pad so that frames i-half..i+half are padded[i..i+2*half]
+    zeros = np.zeros(half, dtype=np.int64)
+    padded = np.concatenate([zeros, np.asarray(binary_arr, dtype=np.int64), zeros])
+    cumsum = np.concatenate([[0], np.cumsum(padded)])
+    i = np.arange(n)
+    window_sum = cumsum[i + 2 * half + 1] - cumsum[i]  # sum of frames i-half..i+half
+
+    if window_size % 2 == 1:
+        return window_sum / window_size
+
+    # even window: the two end frames (i-half and i+half) only get weight 1/2
+    end_frames = padded[i] + padded[i + 2 * half]
+    return (window_sum - 0.5 * end_frames) / window_size
+
+def under_threshold_times_spatiotemporal_method(
+    loop_num: int,
+    rep: int,
+    noise: int,
+    non_sticky: bool = False,
+    target_frame_duration: float = 1,
+    threshold: float = 50,
+    temporal_threshold: float = 180,
+) -> pd.Series:
+    """
+    Get the event lifetimes using the spatiotemporal filtering method. target_frame_duration and temporal_threshold are in seconds.
+    Events below the distance threshold that last less than temporal_threshold are removed, then the remaining events
+    are smoothed with a centered moving average over temporal_threshold (see apply_moving_average) and thresholded at > 0.5.
+    """
+
+    sample_every = int(np.round(target_frame_duration / DELTA_T))
+    actual_frame_duration = sample_every * DELTA_T
+    # events must last at least temporal_threshold, i.e. at least this many frames (and always at least 1 frame);
+    # the 1e-9 keeps floating-point error from rounding an exact multiple of the frame duration up
+    temporal_threshold_frames = max(1, int(np.ceil(temporal_threshold / actual_frame_duration - 1e-9)))
+
+    traj = load_trajectory(loop_num, rep, noise, non_sticky)[::sample_every]
+
+    binary_array = np.array((traj < threshold) * 1)
+    binary_array_filtered = apply_temporal_threshold(binary_array, temporal_threshold_frames)
+    binary_array_smoothed = apply_moving_average(binary_array_filtered, temporal_threshold_frames)
+    binary_array_final = (binary_array_smoothed > 0.5) * 1
+    binary_array_final = pd.Series(binary_array_final, index=traj.index)
+
+    return event_lifetimes(binary_array_final, ignore_changes_time=0, dt=actual_frame_duration)
+
+def under_threshold_times_spatiotemporal_method_all_reps(
+    loop_num: int,
+    noise: int,
+    non_sticky: bool = False,
+    target_frame_duration: float = 1,
+    threshold: float = 50,
+    temporal_threshold: float = 180,
+    pbar: tqdm | None = None,
+    reps: np.ndarray | None = None
+) -> np.ndarray:
+    """
+    Get the event lifetimes using the spatiotemporal filtering method, for all reps of a loop.
+    target_frame_duration and temporal_threshold are in seconds.
+    If `pbar` is provided, update it once per replicate.
+    """
+
+    lifetimes_all: list[pd.Series] = []
+
+    if reps is None:
+        reps = range(10, 19 + 1)  # 10..19 inclusive
+
+    for rep in reps:
+        lifetimes_this_rep = under_threshold_times_spatiotemporal_method(
+            loop_num,
+            rep,
+            noise,
+            non_sticky,
+            target_frame_duration,
+            threshold,
+            temporal_threshold
         )
         lifetimes_all.append(lifetimes_this_rep)
 

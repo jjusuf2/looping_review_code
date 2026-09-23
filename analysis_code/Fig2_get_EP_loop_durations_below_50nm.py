@@ -28,7 +28,7 @@ with tqdm(total=total_iters, desc="calculating times below threshold", unit="rep
                     loop_num=loop_num,
                     noise=noise,
                     threshold=THRESHOLD,
-                    ignore_changes_time=dt,
+                    ignore_changes_time=0,
                     target_frame_duration=dt,
                     pbar=pbar
                 )
