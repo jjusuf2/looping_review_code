@@ -1,3 +1,4 @@
 __pycache__/
-data/
-data_snapshot_20260922/
+*.py[codz]
+*$py.class
+.ipynb_checkpoints
