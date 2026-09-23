@@ -4,7 +4,7 @@ import os
 from functools import lru_cache
 from tqdm.auto import tqdm
 
-DATA_FOLDER = "/mnt/md1/jjusuf/looping_review/processed_data"
+DATA_FOLDER = "/mnt/md1/jjusuf/looping_review/simulation_data_processed"
 
 DELTA_T = 0.02
 

@@ -11,7 +11,7 @@ block_step = int(sys.argv[4]) # 50
 
 sim_calib_curve_data_subset = pd.read_csv('../loop_info.csv', index_col=0)
 
-files = list_URIs('/mnt/md1/jjusuf/looping_review/simulation_data_raw/sim_20260115_initial_with_LE_no_EP_initial_save_every_block/')
+files = list_URIs('/mnt/md1/jjusuf/looping_review/simulation_data_raw/sim_20260115_with_LE_no_EP_main_save_every_block/')
 
 chrom_size = 70000
 region_size = 2000
@@ -71,7 +71,7 @@ right_indices = [lookup[r] for r in right_ids]
 # ---- Open all output files once ----
 outfiles = []
 for r in repeat_nums:
-    fname = f"../processed_data/{loop_name}_non_sticky_{r}_step_{block_step}.txt"
+    fname = f"/mnt/md1/jjusuf/looping_review/simulation_data_processed/{loop_name}_non_sticky_{r}_step_{block_step}.txt"
     outfiles.append(open(fname, "w"))
 
 # ---- Main streaming loop ----

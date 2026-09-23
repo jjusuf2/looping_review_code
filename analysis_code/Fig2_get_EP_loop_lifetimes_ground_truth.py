@@ -12,8 +12,8 @@ from utils import *  # key functions for this project
 THRESHOLD = 50
 
 # get these tables from earlier
-t_under_50nm_EP = pd.read_csv(f'../data/EP_loops_under_threshold_times_50nm.csv')
-t_under_50nm_EP_ns = pd.read_csv(f'../data/EP_loops_non_sticky_under_threshold_times_50nm.csv')
+t_under_50nm_EP = pd.read_csv(f'/mnt/md1/jjusuf/looping_review/analysis_data/EP_loops_under_threshold_times_50nm.csv')
+t_under_50nm_EP_ns = pd.read_csv(f'/mnt/md1/jjusuf/looping_review/analysis_data/EP_loops_non_sticky_under_threshold_times_50nm.csv')
 
 loop_num_arr = np.array([3, 4, 5])
 
